@@ -899,7 +899,7 @@ func (c *Client) ListCiliumPodIPPools(ctx context.Context, opts metav1.ListOptio
 	return c.CiliumClientset.CiliumV2alpha1().CiliumPodIPPools().List(ctx, opts)
 }
 
-func (c *Client) GetLogs(ctx context.Context, namespace, name, container string, sinceTime time.Time, limitBytes int64, previous bool) (string, error) {
+func (c *Client) GetLogs(ctx context.Context, namespace, name, container string, sinceTime time.Time, limitBytes int64, previous, timestamps bool) (string, error) {
 	t := metav1.NewTime(sinceTime)
 	o := corev1.PodLogOptions{
 		Container:  container,
@@ -907,7 +907,7 @@ func (c *Client) GetLogs(ctx context.Context, namespace, name, container string,
 		LimitBytes: &limitBytes,
 		Previous:   previous,
 		SinceTime:  &t,
-		Timestamps: true,
+		Timestamps: timestamps,
 	}
 	r := c.Clientset.CoreV1().Pods(namespace).GetLogs(name, &o)
 	s, err := r.Stream(ctx)

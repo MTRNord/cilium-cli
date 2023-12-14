@@ -84,7 +84,7 @@ func (n *noErrorsInLogs) Run(ctx context.Context, t *check.Test) {
 		for _, container := range info.containers {
 			id := fmt.Sprintf("%s/%s/%s (%s)", pod.Cluster, pod.Namespace, pod.Name, container)
 			t.Debugf("Checking logs for %s", id)
-			logs, err := client.GetLogs(ctx, pod.Namespace, pod.Name, container, since, sysdump.DefaultLogsLimitBytes, false)
+			logs, err := client.GetLogs(ctx, pod.Namespace, pod.Name, container, since, sysdump.DefaultLogsLimitBytes, false, false)
 			if err != nil {
 				t.Fatalf("Error reading Cilium logs: %s", err)
 			}

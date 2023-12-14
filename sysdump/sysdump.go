@@ -2239,7 +2239,7 @@ func (c *Collector) SubmitLogsTasks(pods []*corev1.Pod, since time.Duration, lim
 		for _, d := range allContainers {
 			d := d
 			if err := c.Pool.Submit(fmt.Sprintf("logs-%s-%s", p.Name, d.Name), func(ctx context.Context) error {
-				l, err := c.Client.GetLogs(ctx, p.Namespace, p.Name, d.Name, t, limitBytes, false)
+				l, err := c.Client.GetLogs(ctx, p.Namespace, p.Name, d.Name, t, limitBytes, false, true)
 				if err != nil {
 					return fmt.Errorf("failed to collect logs for %q (%q) in namespace %q: %w", p.Name, d.Name, p.Namespace, err)
 				}
@@ -2256,7 +2256,7 @@ func (c *Collector) SubmitLogsTasks(pods []*corev1.Pod, since time.Duration, lim
 				}
 				if previous {
 					c.logDebug("Collecting logs for restarted container %q in pod %q in namespace %q", d.Name, p.Name, p.Namespace)
-					u, err := c.Client.GetLogs(ctx, p.Namespace, p.Name, d.Name, t, limitBytes, true)
+					u, err := c.Client.GetLogs(ctx, p.Namespace, p.Name, d.Name, t, limitBytes, true, true)
 					if err != nil {
 						return fmt.Errorf("failed to collect previous logs for %q (%q) in namespace %q: %w", p.Name, d.Name, p.Namespace, err)
 					}
