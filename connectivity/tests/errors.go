@@ -79,6 +79,7 @@ func (n *noErrorsInLogs) Run(ctx context.Context, t *check.Test) {
 		t.Fatalf("Error retrieving Cilium pods: %s", err)
 	}
 
+	var failed bool
 	for pod, info := range pods {
 		client := info.client
 		for _, container := range info.containers {
@@ -88,10 +89,13 @@ func (n *noErrorsInLogs) Run(ctx context.Context, t *check.Test) {
 			if err != nil {
 				t.Fatalf("Error reading Cilium logs: %s", err)
 			}
-			n.checkErrorsInLogs(id, logs, t)
+			failed = n.checkErrorsInLogs(id, logs, t) || failed
 		}
 	}
 
+	if failed {
+		t.Fail("Found unexpected errors in Cilium logs")
+	}
 }
 
 // NoUnexpectedPacketDrops checks whether there were no drops due to expected
@@ -189,7 +193,7 @@ func (n *noErrorsInLogs) podContainers(pod *corev1.Pod) (containers []string) {
 	return containers
 }
 
-func (n *noErrorsInLogs) checkErrorsInLogs(id string, logs string, t *check.Test) {
+func (n *noErrorsInLogs) checkErrorsInLogs(id string, logs string, t *check.Test) (failed bool) {
 	uniqueFailures := make(map[string]int)
 	for _, msg := range strings.Split(logs, "\n") {
 		for fail, ignoreMsgs := range n.errorMsgsWithExceptions {
@@ -215,8 +219,11 @@ func (n *noErrorsInLogs) checkErrorsInLogs(id string, logs string, t *check.Test
 			failures.WriteString(f)
 			failures.WriteString(fmt.Sprintf(" (%d occurrences)", c))
 		}
-		t.Failf("Found %d logs in %s matching list of errors that must be investigated:%s", len(uniqueFailures), id, failures.String())
+		t.Logf("⚠️ Found %d logs in %s matching list of errors that must be investigated:%s", len(uniqueFailures), id, failures.String())
+		return true
 	}
+
+	return false
 }
 
 const (
