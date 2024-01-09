@@ -28,9 +28,8 @@ type Parameters struct {
 
 // Status is used to get encrypt status from cilium agents
 type Status struct {
-	client     *k8s.Client
-	params     Parameters
-	ciliumPods []*corev1.Pod
+	client *k8s.Client
+	params Parameters
 }
 
 // NewStatus returns new encrypt.Status struct
@@ -41,22 +40,18 @@ func NewStatus(client *k8s.Client, p Parameters) *Status {
 	}
 }
 
-// initTargetCiliumPods stores cilium agent pods in the status.ciliumPods.
-// If node selector option is specified then only that nodes' cilium-agent
-// pod is stored else all cilium-agents in the cluster are stored.
-func (s *Status) initTargetCiliumPods(ctx context.Context) error {
+// fetchCiliumPods returns slice of cilium agent pods.
+// If option NodeName is specified then only that nodes' cilium-agent
+// pod is returned else all cilium-agents in the cluster are returned.
+func (s *Status) fetchCiliumPods(ctx context.Context) ([]corev1.Pod, error) {
 	opts := metav1.ListOptions{LabelSelector: s.params.AgentPodSelector}
 	if s.params.NodeName != "" {
 		opts.FieldSelector = fmt.Sprintf("spec.nodeName=%s", s.params.NodeName)
 	}
 
-	ciliumPods, err := s.client.ListPods(ctx, s.params.CiliumNamespace, opts)
+	pods, err := s.client.ListPods(ctx, s.params.CiliumNamespace, opts)
 	if err != nil {
-		return fmt.Errorf("unable to list Cilium pods: %w", err)
+		return nil, fmt.Errorf("unable to list Cilium pods: %w", err)
 	}
-
-	for _, ciliumPod := range ciliumPods.Items {
-		s.ciliumPods = append(s.ciliumPods, ciliumPod.DeepCopy())
-	}
-	return nil
+	return pods.Items, nil
 }

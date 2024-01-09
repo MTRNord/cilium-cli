@@ -46,11 +46,12 @@ func (s *Status) GetEncryptStatus(ctx context.Context) error {
 	ctx, cancelFn := context.WithTimeout(ctx, s.params.WaitDuration)
 	defer cancelFn()
 
-	if err := s.initTargetCiliumPods(ctx); err != nil {
+	pods, err := s.fetchCiliumPods(ctx)
+	if err != nil {
 		return err
 	}
 
-	res, err := s.fetchEncryptStatusConcurrently(ctx)
+	res, err := s.fetchEncryptStatusConcurrently(ctx, pods)
 	if err != nil {
 		return err
 	}
@@ -58,7 +59,7 @@ func (s *Status) GetEncryptStatus(ctx context.Context) error {
 	return s.writeStatus(res)
 }
 
-func (s *Status) fetchEncryptStatusConcurrently(ctx context.Context) (map[string]nodeStatus, error) {
+func (s *Status) fetchEncryptStatusConcurrently(ctx context.Context, pods []corev1.Pod) (map[string]nodeStatus, error) {
 	// res contains data returned from cilium pod
 	type res struct {
 		nodeName string
@@ -69,11 +70,11 @@ func (s *Status) fetchEncryptStatusConcurrently(ctx context.Context) (map[string
 	var wg sync.WaitGroup
 
 	// max number of concurrent go routines will be number of cilium agent pods
-	wg.Add(len(s.ciliumPods))
+	wg.Add(len(pods))
 
 	// concurrently fetch state from each cilium pod
-	for _, pod := range s.ciliumPods {
-		go func(ctx context.Context, pod *corev1.Pod) {
+	for _, pod := range pods {
+		go func(ctx context.Context, pod corev1.Pod) {
 			defer wg.Done()
 
 			st, err := s.fetchEncryptStatusFromPod(ctx, pod)
@@ -105,7 +106,7 @@ func (s *Status) fetchEncryptStatusConcurrently(ctx context.Context) (map[string
 	return data, err
 }
 
-func (s *Status) fetchEncryptStatusFromPod(ctx context.Context, pod *corev1.Pod) (nodeStatus, error) {
+func (s *Status) fetchEncryptStatusFromPod(ctx context.Context, pod corev1.Pod) (nodeStatus, error) {
 	cmd := []string{"cilium", "encrypt", "status"}
 	output, err := s.client.ExecInPod(ctx, pod.Namespace, pod.Name, defaults.AgentContainerName, cmd)
 	if err != nil {
