@@ -16,9 +16,10 @@ import (
 
 func newCmdEncrypt() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "encrypt",
-		Short: "Cilium encryption",
-		Long:  ``,
+		Use:     "encryption",
+		Short:   "Cilium encryption",
+		Long:    ``,
+		Aliases: []string{"encrypt"},
 	}
 	cmd.AddCommand(newCmdEncryptStatus())
 	return cmd
