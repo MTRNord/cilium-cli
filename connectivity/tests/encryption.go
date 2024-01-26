@@ -148,13 +148,18 @@ func getFilter(ctx context.Context, t *check.Test, client, clientHost *check.Pod
 	filter := fmt.Sprintf("src host %s", client.Address(ipFam))
 	dstIP := server.Address(ipFam)
 
+	fmt.Printf("tunnel feature: %+v\n", features.Tunnel)
 	if tunnelStatus, ok := t.Context().Feature(features.Tunnel); ok && tunnelStatus.Enabled {
 		cmd := []string{
 			"/bin/sh", "-c",
 			fmt.Sprintf("ip -o route get %s | grep -oE 'src [^ ]*' | cut -d' ' -f2",
 				dstIP),
 		}
+		fmt.Printf("cmd: %s\n", cmd)
 		t.Debugf("Running %s", strings.Join(cmd, " "))
+		fmt.Printf("ctx: %+v\n", ctx)
+		fmt.Printf("namespace: %s\n", clientHost.Pod.Namespace)
+		fmt.Printf("pod: %s\n", clientHost.Pod.Name)
 		srcIP, err := clientHost.K8sClient.ExecInPod(ctx, clientHost.Pod.Namespace,
 			clientHost.Pod.Name, "", cmd)
 		if err != nil {
