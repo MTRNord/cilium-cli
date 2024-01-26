@@ -165,8 +165,12 @@ func getFilter(ctx context.Context, t *check.Test, client, clientHost *check.Pod
 		if err != nil {
 			t.Fatalf("Failed to get IP route: %s", err)
 		}
+		fmt.Printf("srcIP: %s\n", srcIP.String())
 
 		srcIPStr := strings.TrimRight(srcIP.String(), "\n\r")
+		fmt.Printf("srcIPStr: %s\n", srcIPStr)
+		fmt.Printf("ipFam: %s\n", ipFam)
+		fmt.Printf("client.Address(ipFam): %s\n", client.Address(ipFam))
 		if srcIPStr != client.Address(ipFam) {
 			filter = fmt.Sprintf("( %s or src host %s )", filter, srcIPStr)
 		}
