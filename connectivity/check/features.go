@@ -111,10 +111,13 @@ func (ct *ConnectivityTest) extractFeaturesFromCiliumStatus(ctx context.Context,
 		return fmt.Errorf("failed to fetch cilium status: %w", err)
 	}
 
+	fmt.Printf("cilium status:\n\n%+v\n", stdout.String())
+
 	st := &models.StatusResponse{}
 	if err := json.Unmarshal(stdout.Bytes(), st); err != nil {
 		return fmt.Errorf("unmarshaling Cilium stdout json: %w", err)
 	}
+	fmt.Printf("cilium StatusResponse:\n\n%+v\n", st)
 
 	// CNI chaining
 	mode := ""
@@ -178,13 +181,18 @@ func (ct *ConnectivityTest) extractFeaturesFromCiliumStatus(ctx context.Context,
 
 	// encryption
 	mode = "disabled"
+	fmt.Printf("mode1: %s\n", mode)
 	if enc := st.Encryption; enc != nil {
+		fmt.Printf("mode2 %s\n", enc.Mode)
 		mode = strings.ToLower(enc.Mode)
 	}
+	fmt.Printf("mode3: %s\n", mode)
+	fmt.Printf("mode != disabled %t\n", mode != "disabled")
 	result[features.EncryptionPod] = features.Status{
 		Enabled: mode != "disabled",
 		Mode:    mode,
 	}
+	fmt.Printf("result[features.EncryptionPod]: %s\n", result[features.EncryptionPod])
 
 	return nil
 }

@@ -777,6 +777,7 @@ func Run(ctx context.Context, ct *check.ConnectivityTest, addExtraTests func(*ch
 		)
 
 	if !ct.Params().SingleNode {
+		fmt.Printf("EncryptionPod: %s\n", features.EncryptionPod)
 		// Encryption checks are always executed as a sanity check, asserting whether
 		// unencrypted packets shall, or shall not, be observed based on the feature set.
 		ct.NewTest("pod-to-pod-encryption").
